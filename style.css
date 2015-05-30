@@ -1,0 +1,67 @@
+.code .diff_minus { background-color: rgba(255, 0, 0, 0.3) }
+.code .diff_plus { background-color: rgba(0, 255, 0, 0.3) }
+.code .diff_special { background-color: rgba(128, 128, 128, 0.3) }
+.code .conflict { background-color: rgba(255, 239, 0, 0.31)
+}
+
+.code .hll { background-color: #ffffcc }
+.code .c { color: #408080; font-style: italic }
+.code .err { border: 1px solid #FF0000 }
+.code .k { color: #008000; font-weight: bold }
+.code .o { color: #666666 }
+.code .cm { color: #408080; font-style: italic }
+.code .cp { color: #BC7A00 }
+.code .c1 { color: #408080; font-style: italic }
+.code .cs { color: #408080; font-style: italic }
+.code .gd { color: #A00000 }
+.code .ge { font-style: italic }
+.code .gr { color: #FF0000 }
+.code .gh { color: #000080; font-weight: bold }
+.code .gi { color: #00A000 }
+.code .go { color: #808080 }
+.code .gp { color: #000080; font-weight: bold }
+.code .gs { font-weight: bold }
+.code .gu { color: #800080; font-weight: bold }
+.code .gt { color: #0040D0 }
+.code .kc { color: #008000; font-weight: bold }
+.code .kd { color: #008000; font-weight: bold }
+.code .kn { color: #008000; font-weight: bold }
+.code .kp { color: #008000 }
+.code .kr { color: #008000; font-weight: bold }
+.code .kt { color: #B00040 }
+.code .m  { color: #666666 }
+.code .s  { color: #BA2121 }
+.code .na { color: #7D9029 }
+.code .nb { color: #008000 }
+.code .nc { color: #0000FF; font-weight: bold }
+.code .no { color: #880000 }
+.code .nd { color: #AA22FF }
+.code .ni { color: #999999; font-weight: bold }
+.code .ne { color: #D2413A; font-weight: bold }
+.code .nf { color: #0000FF }
+.code .nl { color: #A0A000 }
+.code .nn { color: #0000FF; font-weight: bold }
+.code .nt { color: #008000; font-weight: bold }
+.code .nv { color: #19177C }
+.code .ow { color: #AA22FF; font-weight: bold }
+.code .w  { color: #bbbbbb }
+.code .mf { color: #666666 }
+.code .mh { color: #666666 }
+.code .mi { color: #666666 }
+.code .mo { color: #666666 }
+.code .sb { color: #BA2121 }
+.code .sc { color: #BA2121 }
+.code .sd { color: #BA2121; font-style: italic }
+.code .s2 { color: #BA2121 }
+.code .se { color: #BB6622; font-weight: bold }
+.code .sh { color: #BA2121 }
+.code .si { color: #BB6688; font-weight: bold }
+.code .sx { color: #008000 }
+.code .sr { color: #BB6688 }
+.code .s1 { color: #BA2121 }
+.code .ss { color: #19177C }
+.code .bp { color: #008000 }
+.code .vc { color: #19177C }
+.code .vg { color: #19177C }
+.code .vi { color: #19177C }
+.code .il { color: #666666 }
