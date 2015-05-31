@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 import os
 from flask import Flask, request, send_from_directory
@@ -25,7 +27,7 @@ def webhook():
     ), base, compare)
     pr_id = payload['pull_request']['id']
     with open('/var/www/{}.html'.format(pr_id), 'w') as f:
-        f.write(out)
+        f.write(out.encode('utf-8'))
         print 'wrote', pr_id
     comment_endpoint = 'https://api.github.com/repos/{repo}/issues/{pr_number}/comments'.format(
         repo=repo, pr_number=payload['number'])

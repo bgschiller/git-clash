@@ -17,6 +17,7 @@ import subprocess
 import shutil
 from diffcolor import merge_conflict_diff
 
+debug = True
 
 def read_file(fn):
     try:
@@ -48,6 +49,9 @@ def merge_diff(repo, base_branch, compare_branch):
     pre_merge = {fname: read_file(fname) for fname in changed_files}
     os.chdir('..')
     shutil.rmtree('temp-repo')
+    if debug:
+        with open('save_tree.json', 'w') as f:
+            json.dump(dict(pre_merge=pre_merge, post_merge=file_contents), f)
 
     diffs = [merge_conflict_diff(fname, pre_merge[fname], file_contents[fname], header=(ix == 0))
              for ix, fname in enumerate(changed_files)]
@@ -56,4 +60,5 @@ def merge_diff(repo, base_branch, compare_branch):
 
 if __name__ == '__main__':
     with open('out2.html', 'w') as f:
-        f.write(merge_diff('https://github.com/bgschiller/example.git', 'master', 'new_file'))
+        f.write(merge_diff('https://{}@github.com/TopOPPS/topopps-web.git'.format(os.getenv('GITHUB_TOKEN')),
+                           'release2_2', 'conflict-resolution'))

@@ -74,11 +74,11 @@ def highlight_conflict_file(lines, lexer):
     the start, middle, and end of merge conflicts. highlight
     the code separated by each of these.
     """
-    def highlight(text, cls, start_line):
-        highlighted_text = pygments.highlight(text, lexer, formatter)
-        return [HighlightedLine(cls, line or default, line_no)
-                for line_no, (default, line) in
-                enumerate(izip_longest(text.splitlines(True), highlighted_text.splitlines(True)), start_line)]
+    def highlight(lines, cls, start_line):
+        highlighted_text = iter(pygments.highlight(''.join(lines), lexer, formatter).splitlines(True))
+        for lin in lines:
+            yield HighlightedLine(cls, '\n' if not lin.strip() else next(highlighted_text), start_line)
+            start_line += 1
     ix = 0
     outlines = []
     while ix is not None and ix < len(lines):
@@ -88,7 +88,7 @@ def highlight_conflict_file(lines, lexer):
             end_chunk = next(ix for ix, line in enumerate(lines[ix:], ix)
                              if line.startswith('======='))
             outlines.extend(highlight(
-                text=''.join(lines[ix+1:end_chunk]),
+                lines=lines[ix+1:end_chunk],
                 cls='conflict',
                 start_line=ix+1))
             outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
@@ -99,7 +99,7 @@ def highlight_conflict_file(lines, lexer):
             end_chunk = next(ix for ix, line in enumerate(lines[ix:], ix)
                              if line.startswith('>>>>>>>'))
             outlines.extend(highlight(
-                text=''.join(lines[ix:end_chunk]),
+                lines=lines[ix:end_chunk],
                 cls='conflict',
                 start_line=ix))
             outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
@@ -110,7 +110,7 @@ def highlight_conflict_file(lines, lexer):
             # Read until we find a conflict, or until the end ([ix:None])
             end_chunk = next((ix for ix, line in enumerate(lines[ix:], ix)
                               if line.startswith('<<<<<<<')), None)
-            outlines.extend(highlight(''.join(lines[ix:end_chunk]),
+            outlines.extend(highlight(lines[ix:end_chunk],
                                       cls='',
                                       start_line=ix))
             ix = end_chunk
@@ -142,7 +142,3 @@ def merge_conflict_diff(fname, base_lines, flict_lines, header=True):
     ret = out_file.getvalue()
     out_file.close()
     return ret
-
-if __name__ == '__main__':
-    with open('out.html', 'w') as out_file:
-        out_file.write(merge_conflict_diff('example-repo/pre_conflict.py', 'example-repo/same_fringe.py'))
