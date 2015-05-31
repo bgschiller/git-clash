@@ -10,16 +10,15 @@ Start with a file with conflicts and its revision immediately prior.
     - For each added line, mark it green unless it's already a conflict
     - For each removed line, insert it into the list marked red.
 """
+import StringIO
 
 import difflib
 from itertools import groupby, izip_longest
 from operator import attrgetter
 
 import pygments
-from pygments.lexer import RegexLexer
 import pygments.lexers
 import pygments.formatters
-from pygments.token import Text
 
 
 def read_file(fn):
@@ -32,15 +31,6 @@ class SparseFormatter(pygments.formatters.HtmlFormatter):
     def wrap(self, source, outfile):
         return source
 formatter = SparseFormatter()
-
-class EmptyLexer(RegexLexer):
-    name = 'Empty'
-    tokens = {
-        'root': [
-            (r'.*\n', Text)
-        ]
-    }
-no_lexer = EmptyLexer()
 
 class HighlightedLine(object):
     def __init__(self, cls, html, line_no):
@@ -73,12 +63,12 @@ def diff(prior, post, hbase, hflict):
             unified_diff.extend(_set_class(hflict[jstart:jend], 'addition'))
     return unified_diff
 
-def highlight_base_file(contents, fname, lexer):
+def highlight_base_file(contents, lexer):
     return [HighlightedLine(cls='', html=html, line_no=ix)
             for ix, html in enumerate(pygments.highlight(
             ''.join(contents), lexer, formatter).splitlines(True))]
 
-def highlight_conflict_file(lines, fname, lexer):
+def highlight_conflict_file(lines, lexer):
     """
     Find the <<<<<<<, =======, >>>>>>>> markers that represent
     the start, middle, and end of merge conflicts. highlight
@@ -127,16 +117,17 @@ def highlight_conflict_file(lines, fname, lexer):
     assert map(attrgetter('line_no'), outlines) == range(len(outlines)), str(map(attrgetter('line_no'), outlines))
     return outlines
 
-with open('out.html', 'w') as out_file:
+def merge_conflict_diff(base_fname, flict_fname):
+    out_file = StringIO.StringIO()
     # Write the needed HTML to enable styles
     out_file.write('<head><link rel="stylesheet" type="text/css" href="style.css"></head>\n')
     out_file.write('<pre class="code">')
-    base_file = read_file('example-repo/pre_conflict.py')
+    base_file = read_file(base_fname)
     language_lexer = pygments.lexers.guess_lexer_for_filename('example-repo/pre_conflict.py', base_file)
 
-    flict_file = read_file('example-repo/same_fringe.py')
-    hbase = highlight_base_file(base_file, lexer=language_lexer, fname='example-repo/pre_conflict.py')
-    hflict = highlight_conflict_file(flict_file, lexer=language_lexer, fname='example-repo/same_fringe.py')
+    flict_file = read_file(flict_fname)
+    hbase = highlight_base_file(base_file, lexer=language_lexer)
+    hflict = highlight_conflict_file(flict_file, lexer=language_lexer)
 
 
     classed = diff(base_file, flict_file, hbase, hflict)
@@ -146,3 +137,10 @@ with open('out.html', 'w') as out_file:
             out_file.write(line.html)
         out_file.write('</div>')
     out_file.write('</pre>')
+    ret = out_file.getvalue()
+    out_file.close()
+    return ret
+
+if __name__ == '__main__':
+    with open('out.html', 'w') as out_file:
+        out_file.write(merge_conflict_diff('example-repo/pre_conflict.py', 'example-repo/same_fringe.py'))
