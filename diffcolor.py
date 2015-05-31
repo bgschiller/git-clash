@@ -121,7 +121,7 @@ def merge_conflict_diff(fname, base_lines, flict_lines, header=True):
     out_file = StringIO.StringIO()
     # Write the needed HTML to enable styles
     if header:
-        out_file.write('<head><link rel="stylesheet" type="text/css" href="/style.css"></head>\n')
+        out_file.write('<head><link rel="stylesheet" type="text/css" href="/diff_style.css"></head>\n')
     out_file.write('<h3>' + fname + '</h3>')
     out_file.write('<pre class="code">')
     try:
