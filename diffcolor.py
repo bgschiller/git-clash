@@ -21,12 +21,12 @@ import pygments.lexers
 import pygments.formatters
 
 
-def read_file(fn):
-    with open(fn) as f:
-        return f.readlines()
 
 # Override HtmlFormatter's wrap function so it
 # doesn't wrap our result in excess HTML containers
+from pygments.util import ClassNotFound
+
+
 class SparseFormatter(pygments.formatters.HtmlFormatter):
     def wrap(self, source, outfile):
         return source
@@ -117,20 +117,22 @@ def highlight_conflict_file(lines, lexer):
     assert map(attrgetter('line_no'), outlines) == range(len(outlines)), str(map(attrgetter('line_no'), outlines))
     return outlines
 
-def merge_conflict_diff(base_fname, flict_fname):
+def merge_conflict_diff(fname, base_lines, flict_lines, header=True):
     out_file = StringIO.StringIO()
     # Write the needed HTML to enable styles
-    out_file.write('<head><link rel="stylesheet" type="text/css" href="style.css"></head>\n')
+    if header:
+        out_file.write('<head><link rel="stylesheet" type="text/css" href="/style.css"></head>\n')
+    out_file.write('<h3>' + fname + '</h3>')
     out_file.write('<pre class="code">')
-    base_file = read_file(base_fname)
-    language_lexer = pygments.lexers.guess_lexer_for_filename('example-repo/pre_conflict.py', base_file)
+    try:
+        language_lexer = pygments.lexers.guess_lexer_for_filename(fname, ''.join(base_lines))
+    except ClassNotFound:
+        language_lexer = pygments.lexers.diff.DiffLexer()
 
-    flict_file = read_file(flict_fname)
-    hbase = highlight_base_file(base_file, lexer=language_lexer)
-    hflict = highlight_conflict_file(flict_file, lexer=language_lexer)
+    hbase = highlight_base_file(flict_lines, lexer=language_lexer)
+    hflict = highlight_conflict_file(flict_lines, lexer=language_lexer)
 
-
-    classed = diff(base_file, flict_file, hbase, hflict)
+    classed = diff(base_lines, flict_lines, hbase, hflict)
     for cls, section in groupby(classed, attrgetter('cls')):
         out_file.write('<div' + (cls and ' class="{}"'.format(cls)) + '>')
         for line in section:
