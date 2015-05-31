@@ -1,3 +1,4 @@
+import json
 import os
 from flask import Flask, request, send_from_directory
 import requests
@@ -6,14 +7,14 @@ from cloning import merge_diff
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
-app.config['GITHUB_TOKEN'] = os.getenv('GITHUB_OAUTH_TOKEN')
+app.config['GITHUB_TOKEN'] = os.getenv('GITHUB_TOKEN')
 app.config['GITHUB_USERNAME'] = os.getenv('GITHUB_USERNAME')
 app.config['LINK_TEMPLATE'] = os.getenv('LINK_TEMPLATE')
 
 @app.route('/payload', methods=['POST'])
 def webhook():
     payload = request.get_json()
-    if payload['action'] not in ('opened', 'synchronized'):
+    if payload['action'] not in ('opened', 'synchronize'):
         return '', 204
     compare = payload['pull_request']['head']['ref']
     base = payload['pull_request']['base']['ref']
@@ -25,12 +26,17 @@ def webhook():
     pr_id = payload['pull_request']['id']
     with open('created/{}.html'.format(pr_id), 'w') as f:
         f.write(out)
-    requests.post(
-        '/repos/{repo}/issues/{pr_number}/comments'.format(
-            repo=repo, pr_number=payload['number']),
-        data=dict(body='More accurate diff available at {}'.format(
-            app.config['LINK_TEMPLATE'].format(pr_id))),
+        print 'wrote', pr_id
+    comment_endpoint = 'https://api.github.com/repos/{repo}/issues/{pr_number}/comments'.format(
+        repo=repo, pr_number=payload['number'])
+    data = json.dumps(dict(body='<a href="{}">More accurate diff</a>'.format(
+        app.config['LINK_TEMPLATE'].format(pr_id))))
+    r = requests.post(
+        comment_endpoint,
+        data=data,
         auth=HTTPBasicAuth(app.config['GITHUB_USERNAME'], app.config['GITHUB_TOKEN']))
+    print 'hit', comment_endpoint, 'with data',
+    r.raise_for_status()
 
     return '', 204
 
