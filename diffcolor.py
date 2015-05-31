@@ -12,7 +12,7 @@ Start with a file with conflicts and its revision immediately prior.
 """
 
 import difflib
-from itertools import groupby
+from itertools import groupby, izip_longest
 from operator import attrgetter
 
 import pygments
@@ -24,10 +24,7 @@ from pygments.token import Text
 
 def read_file(fn):
     with open(fn) as f:
-        return f.read()
-
-file_names = ['example-repo/pre_conflict.py', 'example-repo/same_fringe.py']
-file_contents = [read_file(fn) for fn in file_names]
+        return f.readlines()
 
 # Override HtmlFormatter's wrap function so it
 # doesn't wrap our result in excess HTML containers
@@ -65,8 +62,8 @@ def _set_class(lst, cls):
 
 def diff(prior, post, hbase, hflict):
     unified_diff = []
-    for code, istart, iend, jstart, jend in difflib.SequenceMatcher(None, prior.splitlines(), post.splitlines()).get_opcodes():
-        print code
+    for code, istart, iend, jstart, jend in difflib.SequenceMatcher(
+            None, prior, post).get_opcodes():
         if code == 'equal':
             unified_diff.extend(hflict[jstart:jend])
         if code in ('delete', 'replace'):
@@ -79,21 +76,20 @@ def highlight_base_file(contents, fname):
     language_lexer = pygments.lexers.guess_lexer_for_filename(fname, contents)
     return [HighlightedLine(cls='', html=html, line_no=ix)
             for ix, html in enumerate(pygments.highlight(
-            contents, language_lexer, SparseFormatter()
-        ).splitlines(True))]
+            ''.join(contents), language_lexer, SparseFormatter()).splitlines(True))]
 
-def highlight_conflict_file(contents, fname):
+def highlight_conflict_file(lines, fname):
     """
     Find the <<<<<<<, =======, >>>>>>>> markers that represent
     the start, middle, and end of merge conflicts. highlight
     the code separated by each of these.
     """
-    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, contents)
-    lines = contents.splitlines(True)
+    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, ''.join(lines))
     def highlight(text, lexer, cls, start_line):
-        return [HighlightedLine(cls, line, line_no)
-                for line_no, line in
-                enumerate(pygments.highlight(text, lexer, SparseFormatter()).splitlines(True), start_line)]
+        highlighted_text = pygments.highlight(text, lexer, SparseFormatter())
+        return [HighlightedLine(cls, line or default, line_no)
+                for line_no, (default, line) in
+                enumerate(izip_longest(text.splitlines(True),highlighted_text.splitlines(True)), start_line)]
     ix = 0
     outlines = []
     while ix is not None and ix < len(lines):
@@ -132,6 +128,7 @@ def highlight_conflict_file(contents, fname):
                                       cls='',
                                       start_line=ix))
             ix = end_chunk
+    assert map(attrgetter('line_no'), outlines) == range(len(outlines)), str(map(attrgetter('line_no'), outlines))
     return outlines
 
 with open('out.html', 'w') as out_file:
