@@ -129,7 +129,7 @@ def merge_conflict_diff(fname, base_lines, flict_lines, header=True):
     except ClassNotFound:
         language_lexer = pygments.lexers.diff.DiffLexer()
 
-    hbase = highlight_base_file(flict_lines, lexer=language_lexer)
+    hbase = highlight_base_file(base_lines, lexer=language_lexer)
     hflict = highlight_conflict_file(flict_lines, lexer=language_lexer)
 
     classed = diff(base_lines, flict_lines, hbase, hflict)

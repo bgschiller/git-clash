@@ -56,4 +56,4 @@ def merge_diff(repo, base_branch, compare_branch):
 
 if __name__ == '__main__':
     with open('out2.html', 'w') as f:
-        f.write(merge_diff('https://github.com/bgschiller/example.git', 'master', 'diverge'))
+        f.write(merge_diff('https://github.com/bgschiller/example.git', 'master', 'new_file'))
