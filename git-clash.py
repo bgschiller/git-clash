@@ -24,7 +24,7 @@ def webhook():
         repo=repo
     ), base, compare)
     pr_id = payload['pull_request']['id']
-    with open('created/{}.html'.format(pr_id), 'w') as f:
+    with open('/var/www/{}.html'.format(pr_id), 'w') as f:
         f.write(out)
         print 'wrote', pr_id
     comment_endpoint = 'https://api.github.com/repos/{repo}/issues/{pr_number}/comments'.format(
@@ -50,4 +50,4 @@ def root():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
