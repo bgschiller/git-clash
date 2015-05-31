@@ -1,6 +1,5 @@
-.code .diff_minus { background-color: rgba(255, 0, 0, 0.3) }
-.code .diff_plus { background-color: rgba(0, 255, 0, 0.3) }
-.code .diff_special { background-color: rgba(128, 128, 128, 0.3) }
+.code .removal { background-color: rgba(255, 0, 0, 0.3) }
+.code .addition { background-color: rgba(0, 255, 0, 0.3) }
 .code .conflict { background-color: rgba(255, 239, 0, 0.31)
 }
 

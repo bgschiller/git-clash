@@ -54,28 +54,42 @@ class HighlightedLine(object):
         if self.cls is not None:
             return '<div class="{s.cls}" id="line_{s.line_no}">{s.html}</div>'.format(s=self)
         return '<div id="line_{s.line_no}">{s.html}</div>'.format(s=self)
+
     def __repr__(self):
         return '<HighlightedLine %s>' % self
 
-def highlight_base_file(fname):
-    with open(fname) as f:
-        lines = f.readlines()
-    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, ''.join(lines))
-    return [HighlightedLine(cls='', line=html, line_no=ix)
+def _set_class(lst, cls):
+    for hl in lst:
+        hl.cls = hl.cls or cls
+    return lst
+
+def diff(prior, post, hbase, hflict):
+    unified_diff = []
+    for code, istart, iend, jstart, jend in difflib.SequenceMatcher(None, prior.splitlines(), post.splitlines()).get_opcodes():
+        print code
+        if code == 'equal':
+            unified_diff.extend(hflict[jstart:jend])
+        if code in ('delete', 'replace'):
+            unified_diff.extend(_set_class(hbase[istart:iend], 'removal'))
+        if code in ('insert', 'replace'):
+            unified_diff.extend(_set_class(hflict[jstart:jend], 'addition'))
+    return unified_diff
+
+def highlight_base_file(contents, fname):
+    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, contents)
+    return [HighlightedLine(cls='', html=html, line_no=ix)
             for ix, html in enumerate(pygments.highlight(
-            ''.join(lines), language_lexer, SparseFormatter()
+            contents, language_lexer, SparseFormatter()
         ).splitlines(True))]
 
-def highlight_conflict_file(fname):
+def highlight_conflict_file(contents, fname):
     """
     Find the <<<<<<<, =======, >>>>>>>> markers that represent
     the start, middle, and end of merge conflicts. highlight
     the code separated by each of these.
     """
-    with open(fname) as f:
-        lines = f.readlines()
-    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, ''.join(lines))
-
+    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, contents)
+    lines = contents.splitlines(True)
     def highlight(text, lexer, cls, start_line):
         return [HighlightedLine(cls, line, line_no)
                 for line_no, line in
@@ -124,9 +138,12 @@ with open('out.html', 'w') as out_file:
     # Write the needed HTML to enable styles
     out_file.write('<head><link rel="stylesheet" type="text/css" href="style.css"></head>\n')
     out_file.write('<pre class="code">')
-    # Get the diff line by line
-    # The 4 arguments are 2 files and their 2 names
-    for cls, section in groupby(highlight_conflict_file('example-repo/same_fringe.py'), attrgetter('cls')):
+    base_file = read_file('example-repo/pre_conflict.py')
+    flict_file = read_file('example-repo/same_fringe.py')
+    hbase = highlight_base_file(base_file, fname='example-repo/pre_conflict.py')
+    hflict = highlight_conflict_file(flict_file, fname='example-repo/same_fringe.py')
+    classed = diff(base_file, flict_file, hbase, hflict)
+    for cls, section in groupby(classed, attrgetter('cls')):
         out_file.write('<div' + (cls and ' class="{}"'.format(cls)) + '>')
         for line in section:
             out_file.write(line.html)
