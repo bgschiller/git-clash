@@ -31,6 +31,7 @@ def read_file(fn):
 class SparseFormatter(pygments.formatters.HtmlFormatter):
     def wrap(self, source, outfile):
         return source
+formatter = SparseFormatter()
 
 class EmptyLexer(RegexLexer):
     name = 'Empty'
@@ -72,38 +73,35 @@ def diff(prior, post, hbase, hflict):
             unified_diff.extend(_set_class(hflict[jstart:jend], 'addition'))
     return unified_diff
 
-def highlight_base_file(contents, fname):
-    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, contents)
+def highlight_base_file(contents, fname, lexer):
     return [HighlightedLine(cls='', html=html, line_no=ix)
             for ix, html in enumerate(pygments.highlight(
-            ''.join(contents), language_lexer, SparseFormatter()).splitlines(True))]
+            ''.join(contents), lexer, formatter).splitlines(True))]
 
-def highlight_conflict_file(lines, fname):
+def highlight_conflict_file(lines, fname, lexer):
     """
     Find the <<<<<<<, =======, >>>>>>>> markers that represent
     the start, middle, and end of merge conflicts. highlight
     the code separated by each of these.
     """
-    language_lexer = pygments.lexers.guess_lexer_for_filename(fname, ''.join(lines))
-    def highlight(text, lexer, cls, start_line):
-        highlighted_text = pygments.highlight(text, lexer, SparseFormatter())
+    def highlight(text, cls, start_line):
+        highlighted_text = pygments.highlight(text, lexer, formatter)
         return [HighlightedLine(cls, line or default, line_no)
                 for line_no, (default, line) in
-                enumerate(izip_longest(text.splitlines(True),highlighted_text.splitlines(True)), start_line)]
+                enumerate(izip_longest(text.splitlines(True), highlighted_text.splitlines(True)), start_line)]
     ix = 0
     outlines = []
     while ix is not None and ix < len(lines):
         if lines[ix].startswith('<<<<<<<'):
             # Start of a conflict section!
-            outlines.extend(highlight(lines[ix], no_lexer, 'conflict', ix))
+            outlines.append(HighlightedLine(cls='conflict', html=lines[ix], line_no=ix))
             end_chunk = next(ix for ix, line in enumerate(lines[ix:], ix)
                              if line.startswith('======='))
             outlines.extend(highlight(
                 text=''.join(lines[ix+1:end_chunk]),
-                lexer=language_lexer,
                 cls='conflict',
                 start_line=ix+1))
-            outlines.extend(highlight(lines[end_chunk], no_lexer, 'conflict', end_chunk))
+            outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
             ix = end_chunk + 1
 
             # End of first half of conflict, now find ending bit
@@ -112,10 +110,9 @@ def highlight_conflict_file(lines, fname):
                              if line.startswith('>>>>>>>'))
             outlines.extend(highlight(
                 text=''.join(lines[ix:end_chunk]),
-                lexer=language_lexer,
                 cls='conflict',
                 start_line=ix))
-            outlines.extend(highlight(lines[end_chunk], no_lexer, 'conflict', end_chunk))
+            outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
             ix = end_chunk + 1
 
             # End of conflict
@@ -124,7 +121,6 @@ def highlight_conflict_file(lines, fname):
             end_chunk = next((ix for ix, line in enumerate(lines[ix:], ix)
                               if line.startswith('<<<<<<<')), None)
             outlines.extend(highlight(''.join(lines[ix:end_chunk]),
-                                      lexer=language_lexer,
                                       cls='',
                                       start_line=ix))
             ix = end_chunk
@@ -136,9 +132,13 @@ with open('out.html', 'w') as out_file:
     out_file.write('<head><link rel="stylesheet" type="text/css" href="style.css"></head>\n')
     out_file.write('<pre class="code">')
     base_file = read_file('example-repo/pre_conflict.py')
+    language_lexer = pygments.lexers.guess_lexer_for_filename('example-repo/pre_conflict.py', base_file)
+
     flict_file = read_file('example-repo/same_fringe.py')
-    hbase = highlight_base_file(base_file, fname='example-repo/pre_conflict.py')
-    hflict = highlight_conflict_file(flict_file, fname='example-repo/same_fringe.py')
+    hbase = highlight_base_file(base_file, lexer=language_lexer, fname='example-repo/pre_conflict.py')
+    hflict = highlight_conflict_file(flict_file, lexer=language_lexer, fname='example-repo/same_fringe.py')
+
+
     classed = diff(base_file, flict_file, hbase, hflict)
     for cls, section in groupby(classed, attrgetter('cls')):
         out_file.write('<div' + (cls and ' class="{}"'.format(cls)) + '>')
