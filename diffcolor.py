@@ -13,7 +13,7 @@ Start with a file with conflicts and its revision immediately prior.
 import StringIO
 
 import difflib
-from itertools import groupby, izip_longest
+from itertools import groupby, izip_longest, takewhile, chain
 from operator import attrgetter
 
 import pygments
@@ -75,10 +75,20 @@ def highlight_conflict_file(lines, lexer):
     the code separated by each of these.
     """
     def highlight(the_lines, cls, start_line):
-        highlighted_text = iter(pygments.highlight(''.join(the_lines), lexer, formatter).splitlines(True))
-        for lin in the_lines:
-            yield HighlightedLine(cls, '\n' if not lin.strip() else next(highlighted_text), start_line)
-            start_line += 1
+        if len(the_lines) == 0:
+            return
+        empty_starting_lines = takewhile(lambda l: not l.strip(), the_lines)
+        empty_ending_lines = takewhile(lambda l: not l.strip(), reversed(the_lines))
+
+        highlighted_text = chain(empty_starting_lines,
+                                 pygments.highlight(''.join(the_lines), lexer, formatter).splitlines(True),
+                                 empty_ending_lines)
+        this_ix = start_line
+        for lin in highlighted_text:
+            yield HighlightedLine(cls, lin, this_ix)
+            this_ix += 1
+        assert this_ix - start_line == len(the_lines), "Something went wrong at line {}".format(start_line)
+
     ix = 0
     outlines = []
     while ix is not None and ix < len(lines):
