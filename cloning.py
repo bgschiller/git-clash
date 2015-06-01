@@ -61,4 +61,4 @@ def merge_diff(repo, base_branch, compare_branch):
 if __name__ == '__main__':
     with open('out2.html', 'w') as f:
         f.write(merge_diff('https://{}@github.com/TopOPPS/topopps-web.git'.format(os.getenv('GITHUB_TOKEN')),
-                           'release2_2', 'conflict-resolution'))
+                           'release2_2', 'conflict-resolution').encode('utf-8'))

@@ -74,9 +74,9 @@ def highlight_conflict_file(lines, lexer):
     the start, middle, and end of merge conflicts. highlight
     the code separated by each of these.
     """
-    def highlight(lines, cls, start_line):
-        highlighted_text = iter(pygments.highlight(''.join(lines), lexer, formatter).splitlines(True))
-        for lin in lines:
+    def highlight(the_lines, cls, start_line):
+        highlighted_text = iter(pygments.highlight(''.join(the_lines), lexer, formatter).splitlines(True))
+        for lin in the_lines:
             yield HighlightedLine(cls, '\n' if not lin.strip() else next(highlighted_text), start_line)
             start_line += 1
     ix = 0
@@ -88,7 +88,7 @@ def highlight_conflict_file(lines, lexer):
             end_chunk = next(ix for ix, line in enumerate(lines[ix:], ix)
                              if line.startswith('======='))
             outlines.extend(highlight(
-                lines=lines[ix+1:end_chunk],
+                the_lines=lines[ix+1:end_chunk],
                 cls='conflict',
                 start_line=ix+1))
             outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
@@ -99,7 +99,7 @@ def highlight_conflict_file(lines, lexer):
             end_chunk = next(ix for ix, line in enumerate(lines[ix:], ix)
                              if line.startswith('>>>>>>>'))
             outlines.extend(highlight(
-                lines=lines[ix:end_chunk],
+                the_lines=lines[ix:end_chunk],
                 cls='conflict',
                 start_line=ix))
             outlines.append(HighlightedLine(cls='conflict', html=lines[end_chunk], line_no=end_chunk))
@@ -110,7 +110,7 @@ def highlight_conflict_file(lines, lexer):
             # Read until we find a conflict, or until the end ([ix:None])
             end_chunk = next((ix for ix, line in enumerate(lines[ix:], ix)
                               if line.startswith('<<<<<<<')), None)
-            outlines.extend(highlight(lines[ix:end_chunk],
+            outlines.extend(highlight(the_lines=lines[ix:end_chunk],
                                       cls='',
                                       start_line=ix))
             ix = end_chunk
