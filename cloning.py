@@ -33,22 +33,16 @@ def partition(pred, iterable):
     return ifilterfalse(pred, t1), ifilter(pred, t2)
 
 def merge_diff(repo, base_branch, compare_branch):
-    os.mkdir('temp-repo')
-    os.chdir('temp-repo')
-    os.system('git init')
-    os.system('git remote add origin {}'.format(repo))
-    os.system('git fetch origin {}:base'.format(base_branch))
-    os.system('git fetch origin {}:compare'.format(compare_branch))
-    os.system('git checkout base')
-    os.system('git merge compare --no-commit --no-ff')
-    changed_files = [line.split(' ', 1)[1].strip() for line in
-                     subprocess.check_output('git status -s'.split()).splitlines()]
+    os.chdir(repo)
+    os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(compare_branch))
+    os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(base_branch))
+    os.system('git merge {} --no-commit --no-ff'.format(compare))
+    changed_files = subprocess.check_output('git diff --name-only --diff-filter=U'.split()).splitlines()
 
     file_contents = {fname: read_file(fname) for fname in changed_files}
     os.system('git merge --abort')
     pre_merge = {fname: read_file(fname) for fname in changed_files}
     os.chdir('..')
-    shutil.rmtree('temp-repo')
     if debug:
         with open('save_tree.json', 'w') as f:
             json.dump(dict(pre_merge=pre_merge, post_merge=file_contents), f)

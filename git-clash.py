@@ -20,11 +20,8 @@ def webhook():
         return '', 204
     compare = payload['pull_request']['head']['ref']
     base = payload['pull_request']['base']['ref']
-    repo = payload['pull_request']['base']['repo']['full_name']
-    out = merge_diff('https://{token}@github.com/{repo}'.format(
-        token=app.config['GITHUB_TOKEN'],
-        repo=repo
-    ), base, compare)
+    repo = payload['pull_request']['base']['repo']['name']
+    out = merge_diff(repo, base, compare)
     pr_id = payload['pull_request']['id']
     with open('/var/www/{}.html'.format(pr_id), 'w') as f:
         f.write(out.encode('utf-8'))
