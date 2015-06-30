@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 mkdir temp-repo
 cd temp-repo
@@ -11,6 +12,7 @@ git status # Parse out all the 'Changes to be committed:' and 'Unmerged paths:' 
 """
 from itertools import tee, ifilterfalse, ifilter
 import json
+import click
 
 import os
 import subprocess
@@ -33,16 +35,16 @@ def partition(pred, iterable):
     return ifilterfalse(pred, t1), ifilter(pred, t2)
 
 def merge_diff(repo, base_branch, compare_branch):
-    os.chdir(repo)
+    os.chdir('repos/'+repo)
     os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(compare_branch))
     os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(base_branch))
-    os.system('git merge {} --no-commit --no-ff'.format(compare))
-    changed_files = subprocess.check_output('git diff --name-only --diff-filter=U'.split()).splitlines()
+    os.system('git merge {} --no-commit --no-ff'.format(compare_branch))
+    changed_files = subprocess.check_output('git diff --name-only'.split()).splitlines()
 
     file_contents = {fname: read_file(fname) for fname in changed_files}
     os.system('git merge --abort')
     pre_merge = {fname: read_file(fname) for fname in changed_files}
-    os.chdir('..')
+    os.chdir('../..')
     if debug:
         with open('save_tree.json', 'w') as f:
             json.dump(dict(pre_merge=pre_merge, post_merge=file_contents), f)
@@ -52,7 +54,14 @@ def merge_diff(repo, base_branch, compare_branch):
 
     return '\n'.join(diffs)
 
+@click.command()
+@click.argument('repo')
+@click.argument('base')
+@click.argument('compare')
+@click.argument('id')
+def write_diff(repo, base, compare, id):
+    out = merge_diff(repo, base, compare)
+    with open('created/{}.html'.format(id), 'w') as f:
+        f.write(out)
 if __name__ == '__main__':
-    with open('out2.html', 'w') as f:
-        f.write(merge_diff('https://{}@github.com/TopOPPS/topopps-web.git'.format(os.getenv('GITHUB_TOKEN')),
-                           'release2_2', 'conflict-resolution').encode('utf-8'))
+    write_diff()

@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import os
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, url_for
 import requests
 from requests.auth import HTTPBasicAuth
 from cloning import merge_diff
@@ -21,15 +21,16 @@ def webhook():
     compare = payload['pull_request']['head']['ref']
     base = payload['pull_request']['base']['ref']
     repo = payload['pull_request']['base']['repo']['name']
-    out = merge_diff(repo, base, compare)
+    full_repo = payload['pull_request']['base']['repo']['full_name']
     pr_id = payload['pull_request']['id']
-    with open('/var/www/{}.html'.format(pr_id), 'w') as f:
-        f.write(out.encode('utf-8'))
-        print 'wrote', pr_id
+    bg_task = 'python cloning.py {} {} {} {} &'.format(
+        repo, base, compare, pr_id)
+    print bg_task
+    os.system(bg_task)
     comment_endpoint = 'https://api.github.com/repos/{repo}/issues/{pr_number}/comments'.format(
-        repo=repo, pr_number=payload['number'])
+        repo=full_repo, pr_number=payload['number'])
     data = json.dumps(dict(body='<a href="{}">More accurate diff</a>'.format(
-        app.config['LINK_TEMPLATE'].format(pr_id))))
+        url_for('retrieve_diff', pr_id=pr_id))))
     r = requests.post(
         comment_endpoint,
         data=data,
@@ -43,9 +44,9 @@ def webhook():
 def retrieve_diff(pr_id):
     return send_from_directory('created', '{}.html'.format(pr_id))
 
-@app.route('/style.css')
+@app.route('/diff_style.css')
 def root():
-    return app.send_static_file('style.css')
+    return app.send_static_file('diff_style.css')
 
 
 if __name__ == '__main__':
