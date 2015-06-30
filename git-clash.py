@@ -30,7 +30,7 @@ def webhook():
     comment_endpoint = 'https://api.github.com/repos/{repo}/issues/{pr_number}/comments'.format(
         repo=full_repo, pr_number=payload['number'])
     data = json.dumps(dict(body='<a href="{}">More accurate diff</a>'.format(
-        url_for('retrieve_diff', pr_id=pr_id))))
+        app.config['LINK_TEMPLATE'].format(pr_id))))
     r = requests.post(
         comment_endpoint,
         data=data,
