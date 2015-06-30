@@ -61,7 +61,7 @@ def merge_diff(repo, base_branch, compare_branch):
 @click.argument('id')
 def write_diff(repo, base, compare, id):
     out = merge_diff(repo, base, compare)
-    with open('created/{}.html'.format(id), 'w') as f:
+    with open('diff/{}.html'.format(id), 'w') as f:
         f.write(out)
 if __name__ == '__main__':
     write_diff()

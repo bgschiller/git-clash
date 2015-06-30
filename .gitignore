@@ -3,3 +3,6 @@
 *.pyc
 created/
 repos/
+logs/
+diff/
+

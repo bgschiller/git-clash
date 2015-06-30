@@ -42,7 +42,7 @@ def webhook():
 
 @app.route('/diff/<pr_id>')
 def retrieve_diff(pr_id):
-    return send_from_directory('created', '{}.html'.format(pr_id))
+    return send_from_directory('diff', '{}.html'.format(pr_id))
 
 @app.route('/diff_style.css')
 def root():
