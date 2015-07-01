@@ -39,7 +39,7 @@ def merge_diff(repo, base_branch, compare_branch):
     os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(compare_branch))
     os.system('git fetch origin {0} && git checkout {0} && git merge origin/{0}'.format(base_branch))
     os.system('git merge {} --no-commit --no-ff'.format(compare_branch))
-    changed_files = subprocess.check_output('git diff --name-only'.split()).splitlines()
+    changed_files = subprocess.check_output('git diff HEAD --name-only'.split()).splitlines()
 
     file_contents = {fname: read_file(fname) for fname in changed_files}
     os.system('git merge --abort')
